@@ -7,6 +7,10 @@ Command: /addbot /removebot /listbot
 import httpx
 from bs4 import BeautifulSoup
 import re
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# REGEX CONFIGURATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+_OTP_RE = re.compile(r"\b\d{4,8}\b")
 from datetime import datetime
 import time
 import threading
