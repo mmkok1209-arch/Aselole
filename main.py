@@ -10,7 +10,7 @@ import re
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # REGEX CONFIGURATION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-_OTP_RE = re.compile(r"\b\d{4,8}\b")
+_OTP_RE = re.compile(r"\b\d{3}[-\s]?\d{3}\b|\b\d{4,8}\b")
 from datetime import datetime
 import time
 import threading
@@ -327,26 +327,20 @@ def get_sms(acc, rng, number, _retry=0):
         return get_sms(acc, rng, number, _retry + 1)
     if r.status_code == 429 or "/login" in str(r.url):
         return []
-    soup      = BeautifulSoup(r.text, "html.parser")
+    soup = BeautifulSoup(r.text, "html.parser")
     sms_texts = []
     try:
-        for t in soup.stripped_strings:
-            t = t.strip().replace("<#>", "").strip()
-            if re.fullmatch(r"[A-Za-z0-9]{10,}", t):
-                continue
-            t_low = t.lower()
-            if any(x in t_low for x in ["sender", "revenue", "time"]):
-                continue
-            if re.search(r"\b\d{2}:\d{2}:\d{2}\b", t):
-                continue
-            if "$" in t:
-                continue
-            if t and "No SMS Found" not in t:
-                sms_texts.append(t)
+        cells = soup.find_all(["td", "div"], class_=re.compile(r"message|sms", re.I)) or [soup]
+        for cell in cells:
+            text = cell.get_text(separator=" ").strip()
+            text = text.replace("<#>", "").strip()
+            if text and "No SMS Found" not in text:
+                sms_texts.append(text)
     except Exception as e:
         _log("SMS", f"parse error: {e}", Fore.RED)
     return list(dict.fromkeys(sms_texts))
     
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PLATFORM DETECTION
